@@ -1,6 +1,6 @@
 let emitters = [];
 let emitter;
-let pColor = 0;
+let pColor = 20;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -33,18 +33,18 @@ function draw() {
 
 function keyPressed(){
   if (keyCode === LEFT_ARROW){
-    if(pColor == 100){
-      pColor = 10
+    if(pColor == 340){
+      pColor = 20
     }else{
-    pColor = pColor + 10
+    pColor = pColor + 20
     }
   }
 
   if (keyCode === RIGHT_ARROW){
-    if(pColor == 10){
-      pColor = 100
+    if(pColor == 20){
+      pColor = 360
     }else{
-    pColor = pColor - 10
+    pColor = pColor - 20
     }
   }
 }
