@@ -62,18 +62,24 @@ class Particle {
     this.acceleration = createVector(0, 0);
     this.lifespan = 255.0;
     this.fill = fill;
+    this.fillFact = map(fill, 0, 360, 0.001, 0.05);
   }
 
 
   run() {
     // Adds acceleration to velocity, adding velocity to the location
     // Then acceleration gets set to 0 because the force is getting re-added to it every draw loop
-   let gravity = createVector(0, 0.05); // gravity needs to be declared as a variable to use the createVector function, since passing applyForce two numbers won't make it register a vector
-    this.applyForce(gravity);
-    this.velocity.add(this.acceleration);
-    this.position.add(this.velocity);
-    this.lifespan -= 2.0;
-    this.acceleration.mult(0);
+    let gravity = createVector(0, this.fillFact); // gravity needs to be declared as a variable to use the createVector function, since passing applyForce two numbers won't make it register a vector
+      if (this.position.y < height - 10){
+      this.applyForce(gravity);
+      this.velocity.add(this.acceleration);
+      this.position.add(this.velocity);
+      //this.lifespan -= 2.0;
+      this.acceleration.mult(0);
+      }
+      if (this.position.y >= height - 10){
+        this.velocity.mult(1, 0);
+      }
     // lifespan determines the stroke and fill alpha of the particle
     noStroke();
     colorMode(HSB);
@@ -119,7 +125,7 @@ class Emitter { //constructing an emitter class to clean up the draw loop and al
 
 //https://natureofcode.com/particles/
 
-// Have it so you can cycle through colours using arrow keys, maybe pressing left or right adds or subtracts 10?
+
 // Have it set up so that when the particles hit the bottom of the screen they stop and sit there (so force downwards is only applied when it's above 0 and not below another particle)
 // Some text at the bottom that says to press buttons to cycle through different sand colours
 // Then more mouse interactivity if there's time (turn mouse into a repeller and push the sand around maybe? Other particles like water or gas that behave differently?)
