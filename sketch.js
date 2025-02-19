@@ -2,6 +2,12 @@ let emitters = [];
 let emitter;
 let pColor = 20;
 
+let bucket;
+
+function preload(){
+  bucket = loadImage('bucket.png');
+}
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   emitter = new Emitter;
@@ -59,7 +65,7 @@ function windowResized() {
 
 class Particle {
   constructor(x, y, fill) {
-    this.size = 3;
+    this.size = 10;
     this.position =  createVector(x, y);
     this.velocity = createVector(random(-.5, .5), random(-.5, 0));
     this.acceleration = createVector(0, 0);
@@ -79,9 +85,9 @@ class Particle {
         this.velocity.add(this.acceleration);
         this.position.add(this.velocity);
       }
-    
       this.acceleration.mult(0);
-      if (this.position.y >= height - 10 || this.stopped == true){
+
+      if (this.stopped == true){
         //mess with this if you want to make more advanced physics, currently the sand just stops immediately
         this.velocity.mult(0);
         this.stopped == true;
@@ -94,14 +100,13 @@ class Particle {
   }
 
   look(theseParticles){
-    let desiredSeparation = this.size * 3;
+    let desiredSeparation = this.size;
     for(let i = 0; i < theseParticles.length; i++){
-      const d = p5.Vector.dist(theseParticles[i].position, this.position);
-      if (this != theseParticles[i] && theseParticles[i].stopped == true && d < desiredSeparation){
+      let d = p5.Vector.dist(theseParticles[i].position, this.position);
+      if ((this != theseParticles[i] && theseParticles[i].stopped == true && d < desiredSeparation) || this.position.y >= height - 10) {
         this.stopped = true;
-      }
+      } // I want to write "else this.stopped = false" but it breaks the code... why?
     }
-
   }
 
   // Adds whatever force is being applied to it in the draw loop to the acceleration
@@ -160,7 +165,6 @@ class Emitter { //constructing an emitter class to clean up the draw loop and al
 
 //https://natureofcode.com/particles/
 
-
-// Have it set up so that when the particles hit the bottom of the screen they stop and sit there (so force downwards is only applied when it's above 0 and not below another particle)
 // Some text at the bottom that says to press buttons to cycle through different sand colours
 // Then more mouse interactivity if there's time (turn mouse into a repeller and push the sand around maybe? Other particles like water or gas that behave differently?)
+// Or make it so you can press a key and all the particles of a certain colour dissapear, but then you'd want to check for whether or not they're stopped
