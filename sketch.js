@@ -1,6 +1,7 @@
 let emitters = [];
 let emitter;
 let pColor = 20;
+let repelling = false;
 
 let bucket;
 
@@ -8,10 +9,20 @@ function preload(){
   bucket = loadImage('bucket.png');
 }
 
+
+
+
+
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   emitter = new Emitter;
 }
+
+
+
+
+
 
 
 
@@ -24,24 +35,22 @@ function draw() {
   let gravity = createVector(0, 0.1);
   emitter.applyGravity(gravity);
 
-
   if(mouseIsPressed == true){
     emitter.addParticle(mouseX, mouseY);
   }
   emitter.run();
-  
-
 
   colorMode(HSB);
   fill(pColor, 100, 100);
   ellipse(width/1.1, height/1.1, 20, 20)
 }
 
-// function mousePressed(){
-//   pColor = random(100);
-// }
+
+
 
 function keyPressed(){
+
+  // Cycling through different colours with left and right arrows
   if (keyCode === LEFT_ARROW){
     if(pColor == 340){
       pColor = 20
@@ -57,15 +66,27 @@ function keyPressed(){
     pColor = pColor - 20
     }
   }
+
+  // using escape key to delete all the particles
+  if (keyCode == 27){
+    emitter.deleteColor(pColor);
+  }
+
+  if (key === 'r'){
+    repelling = true;
+  }
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
 
+
+
+
 class Particle {
   constructor(x, y, fill) {
-    this.size = 10;
+    this.size = 5;
     this.position =  createVector(x, y);
     this.velocity = createVector(random(-.5, .5), random(-.5, 0));
     this.acceleration = createVector(0, 0);
@@ -114,6 +135,15 @@ class Particle {
     let f = force.copy();
     f.div(this.mass);
     this.acceleration.add(f);
+    this.stopped = false;
+  }
+
+  // Seperate applyGravity method because I want gravity to apply to the particles even when they're not moving
+
+  applyGravity(force){
+    let f = force.copy();
+    f.div(this.mass);
+    this.acceleration.add(f);
   }
 
   // Is the particle alive or dead?
@@ -127,6 +157,7 @@ class Emitter { //constructing an emitter class to clean up the draw loop and al
     this.origin = createVector(x, y);
     this.particles = []; //this takes the place of declaring a global particle array
     this.index = 0;
+    this.repeller = new Repeller ();
   }
 
   addParticle(x, y){ 
@@ -141,8 +172,8 @@ class Emitter { //constructing an emitter class to clean up the draw loop and al
 
   applyGravity(force) {
     for(let i = 0; i < this.particles.length; i++){
-      if(this.particles[i].position.y <= height - 10){
-        this.particles[i].applyForce(force);
+      if(this.particles[i].position.y <= height - 1){
+        this.particles[i].applyGravity(force);
       }
     }
   }
@@ -152,19 +183,69 @@ class Emitter { //constructing an emitter class to clean up the draw loop and al
     for (let i = this.particles.length - 1; i >= 0; i--){
       this.particles[i].run();
       this.particles[i].look(this.particles);
-      
-      
-      if (this.particles[i].isDead()) { //i.e. if particle.isDead is true
-      this.particles.splice(i, 1);  // removes particle at index i
+    }
+    if(repelling == true){
+      this.repeller.show();
+      for (let i = 0; i < this.particles.length; i++){
+        let force =  this.repeller.repel(this.particles[i]);
+        this.particles[i].applyForce(force);
+        console.log("yup!");
+      }
+      // for (let particle of this.particles){
+      //   let force = this.repeller.repel(particle);
+      //   particle.applyForce(force);
+      // }
+
+    }
+  }
+
+  deleteColor(colorVal){
+    for(let i = this.particles.length - 1; i > 0; i--){
+      if(this.particles[i].fill == colorVal){
+        this.particles.splice(i, 1);
       }
     }
   }
 }
 
-// maybe come back to some of the examples, e.g. having the particle system follow the mouse
+class Repeller {
+
+  constructor() {    
+    //Change here to adjust strength
+    this.power = 150;
+    this.position = createVector(mouseX, mouseY);
+  }
+
+  show() {
+    //this.position.x = mouseX;
+    //this.position.y = mouseY;
+    stroke(0);
+    fill(255);
+    ellipse(mouseX, mouseY, 50, 50);
+
+
+  }
+
+  repel(particle) {
+    let force = p5.Vector.sub(this.position, particle.position);
+    let distance = force.mag();
+
+    distance = constrain(distance, 5, 50);
+    let strength = -1 * this.power / (distance * distance);
+    force.setMag(strength);
+    return force;
+
+
+  }
+
+}
+
+
 
 //https://natureofcode.com/particles/
 
 // Some text at the bottom that says to press buttons to cycle through different sand colours
 // Then more mouse interactivity if there's time (turn mouse into a repeller and push the sand around maybe? Other particles like water or gas that behave differently?)
 // Or make it so you can press a key and all the particles of a certain colour dissapear, but then you'd want to check for whether or not they're stopped
+
+// Add code that says: when a force other than gravity is applied, this.stopped = false
