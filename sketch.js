@@ -2,6 +2,7 @@ let emitters = [];
 let emitter;
 let pColor = 20;
 let repelling = false;
+let exploding = false;
 
 let bucket;
 
@@ -43,6 +44,10 @@ function draw() {
   colorMode(HSB);
   fill(pColor, 100, 100);
   ellipse(width/1.1, height/1.1, 20, 20)
+
+  if (exploding == true && keyIsPressed === true){
+    explosion(emitter);
+  }
 }
 
 
@@ -52,6 +57,7 @@ function keyPressed(){
 
   // Cycling through different colours with left and right arrows
   if (keyCode === LEFT_ARROW){
+    exploding = false;
     if(pColor == 340){
       pColor = 20
     }else{
@@ -60,6 +66,7 @@ function keyPressed(){
   }
 
   if (keyCode === RIGHT_ARROW){
+    exploding = false;
     if(pColor == 20){
       pColor = 360
     }else{
@@ -69,13 +76,19 @@ function keyPressed(){
 
   // using escape key to delete all the particles
   if (keyCode == 27){
+    exploding = false;
     emitter.deleteColor(pColor);
   }
 
   if (key === 'r'){
     repelling = true;
   }
+
+  if (keyCode === 32 && keyIsPressed === true){
+    exploding = true;
+  }
 }
+    
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
@@ -172,7 +185,7 @@ class Emitter { //constructing an emitter class to clean up the draw loop and al
 
   applyGravity(force) {
     for(let i = 0; i < this.particles.length; i++){
-      if(this.particles[i].position.y <= height - 1){
+      if(this.particles[i].position.y <= height - 10){
         this.particles[i].applyGravity(force);
       }
     }
@@ -189,8 +202,7 @@ class Emitter { //constructing an emitter class to clean up the draw loop and al
       for (let i = 0; i < this.particles.length; i++){
         // introduce some code that says "if the repeller is a certain distance away apply force"
         let distance = p5.Vector.dist(this.particles[i].position, this.repeller.position);
-        console.log(distance);
-        if(distance.x < 5 || distance.y < 550){
+        if(distance.x < 1000 || distance.y < 100){
           let force =  this.repeller.repel(this.particles[i]);
           this.particles[i].applyForce(force);
         }
@@ -245,7 +257,12 @@ class Repeller {
 
 }
 
-
+function explosion(myEmitter){
+  for(let i = 0; i < myEmitter.particles.length; i++){
+    let force = createVector(random(-50, 50), -10);
+    myEmitter.particles[i].applyForce(force);
+  }
+}
 
 //https://natureofcode.com/particles/
 
@@ -254,3 +271,7 @@ class Repeller {
 // Or make it so you can press a key and all the particles of a certain colour dissapear, but then you'd want to check for whether or not they're stopped
 
 // Add code that says: when a force other than gravity is applied, this.stopped = false
+
+// If I'm stuck on trying to make this work: try having "press space to make the particles blow up"
+
+// Create bounce physics on the side of the walls!
