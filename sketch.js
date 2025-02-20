@@ -187,9 +187,14 @@ class Emitter { //constructing an emitter class to clean up the draw loop and al
     if(repelling == true){
       this.repeller.show();
       for (let i = 0; i < this.particles.length; i++){
-        let force =  this.repeller.repel(this.particles[i]);
-        this.particles[i].applyForce(force);
-        console.log("yup!");
+        // introduce some code that says "if the repeller is a certain distance away apply force"
+        let distance = p5.Vector.dist(this.particles[i].position, this.repeller.position);
+        console.log(distance);
+        if(distance.x < 5 || distance.y < 550){
+          let force =  this.repeller.repel(this.particles[i]);
+          this.particles[i].applyForce(force);
+        }
+        
       }
       // for (let particle of this.particles){
       //   let force = this.repeller.repel(particle);
