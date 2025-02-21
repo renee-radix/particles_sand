@@ -6,6 +6,7 @@ let exploding = false;
 
 let bucket;
 
+
 function preload(){
   bucket = loadImage('bucket.png');
 }
@@ -18,6 +19,25 @@ function preload(){
 function setup() {
   createCanvas(windowWidth, windowHeight);
   emitter = new Emitter;
+
+  let leftColorChangeButton = createButton('Colour change to the left');
+  leftColorChangeButton.position(width/1.4, height/16);
+  leftColorChangeButton.mousePressed(incrementColor);
+
+  let rightColorChangeButton = createButton('Color change to the right');
+  rightColorChangeButton.position(width/1.4, (height/16) * 2);
+  rightColorChangeButton.mousePressed(decrementColor);
+
+  let deleteButton = createButton('Delete particles');
+  deleteButton.position(width/1.4, (height/16) * 3);
+  
+
+  let explosionButton = createButton('Explode particles!');
+  explosionButton.position(width/1.4, (height/16) * 4);
+
+  explosionButton.mousePressed(console.log("hi"));
+  deleteButton.mousePressed(emitter.deleteColor(pColor));
+  
 }
 
 
@@ -48,6 +68,8 @@ function draw() {
   if (exploding == true && keyIsPressed === true){
     explosion(emitter);
   }
+
+
 }
 
 
@@ -58,20 +80,13 @@ function keyPressed(){
   // Cycling through different colours with left and right arrows
   if (keyCode === LEFT_ARROW){
     exploding = false;
-    if(pColor == 340){
-      pColor = 20
-    }else{
-    pColor = pColor + 20
-    }
+    incrementColor();
+
   }
 
   if (keyCode === RIGHT_ARROW){
     exploding = false;
-    if(pColor == 20){
-      pColor = 360
-    }else{
-    pColor = pColor - 20
-    }
+    decrementColor();
   }
 
   // using escape key to delete all the particles
@@ -259,8 +274,24 @@ class Repeller {
 
 function explosion(myEmitter){
   for(let i = 0; i < myEmitter.particles.length; i++){
-    let force = createVector(random(-50, 50), -10);
+    let force = createVector(random(-10, 10), random(-1, -10));
     myEmitter.particles[i].applyForce(force);
+  }
+}
+
+function incrementColor(){
+  if(pColor == 340){
+    pColor = 20
+  }else{
+  pColor = pColor + 20
+  }
+}
+
+function decrementColor(){
+  if(pColor == 20){
+    pColor = 360
+  }else{
+  pColor = pColor - 20
   }
 }
 
@@ -275,3 +306,4 @@ function explosion(myEmitter){
 // If I'm stuck on trying to make this work: try having "press space to make the particles blow up"
 
 // Create bounce physics on the side of the walls!
+// Make it so that if a particle leaves the X bounds of the canvas it gets deleted
