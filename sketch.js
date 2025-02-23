@@ -1,25 +1,17 @@
 let emitters = [];
 let emitter;
-let pColor = 20;
-let repelling = false;
+let pColor;
 let exploding = false;
-
-let bucket;
-
-
-function preload(){
-  bucket = loadImage('bucket.png');
-}
-
-
-
-
-
+let currentSize = 4;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   emitter = new Emitter;
+  pColor = random(360);
 
+  // Buttons need to be in setup loop otherwise they'll slow the sketch to a crawl, since they're html elements they can't have a background go over them.
+  // I could put them in the resizeWindow() function but that would lead to them being duplicated since I don't know how to delete buttons
+  // There is a way I can change the way the buttons look in CSS but I don't know if I want to dig into that right now. 
   let leftColorChangeButton = createButton('Colour change to the left');
   leftColorChangeButton.position(width/1.4, height/16);
   leftColorChangeButton.mousePressed(incrementColor);
@@ -30,28 +22,30 @@ function setup() {
 
   let deleteButton = createButton('Delete particles');
   deleteButton.position(width/1.4, (height/16) * 3);
-  
+  deleteButton.mousePressed(deleteColor);
 
   let explosionButton = createButton('Explode particles!');
   explosionButton.position(width/1.4, (height/16) * 4);
+  explosionButton.mousePressed(explosion);
 
-  explosionButton.mousePressed(console.log("hi"));
-  deleteButton.mousePressed(emitter.deleteColor(pColor));
+  let increaseSizeButton = createButton('Increase particle size');
+  increaseSizeButton.position(width/1.4, (height/16)*5);
+  increaseSizeButton.mousePressed(increaseSize);
+  
+  let decreaseSizeButton = createButton('Decrease particle size');
+  decreaseSizeButton.position(width/1.4, (height/16)*6);
+  decreaseSizeButton.mousePressed(decreaseSize);
+
+  let resetButton = createButton('Reset');
+  resetButton.position(width/1.4, (height/16) * 7);
+  resetButton.mousePressed(reset);
   
 }
 
 
-
-
-
-
-
-
 function draw() {
   background(0);
-  //emitter = new Emitter(width/2, height/2);
-  //emitter.addParticle();
-  //emitter.run();
+
 
   let gravity = createVector(0, 0.1);
   emitter.applyGravity(gravity);
@@ -62,8 +56,8 @@ function draw() {
   emitter.run();
 
   colorMode(HSB);
-  fill(pColor, 100, 100);
-  ellipse(width/1.1, height/1.1, 20, 20)
+  fill(pColor, 100, 100, 50);
+  rect(width/1.1, height/1.1, currentSize, currentSize)
 
   if (exploding == true && keyIsPressed === true){
     explosion(emitter);
@@ -74,7 +68,7 @@ function draw() {
 
 
 
-
+// Alternative functionality for keyboard users
 function keyPressed(){
 
   // Cycling through different colours with left and right arrows
@@ -92,11 +86,11 @@ function keyPressed(){
   // using escape key to delete all the particles
   if (keyCode == 27){
     exploding = false;
-    emitter.deleteColor(pColor);
+    deleteColor();
   }
 
   if (key === 'r'){
-    repelling = true;
+    reset();
   }
 
   if (keyCode === 32 && keyIsPressed === true){
@@ -113,12 +107,11 @@ function windowResized() {
 
 
 class Particle {
-  constructor(x, y, fill) {
-    this.size = 5;
+  constructor(x, y, fill, size) {
+    this.size = size;
     this.position =  createVector(x, y);
     this.velocity = createVector(random(-.5, .5), random(-.5, 0));
     this.acceleration = createVector(0, 0);
-    this.lifespan = 255.0;
     this.fill = fill;
     this.mass = map(fill, 0, 360, 1, 5);
     this.stopped = false;
@@ -141,10 +134,17 @@ class Particle {
         this.velocity.mult(0);
         this.stopped == true;
       }
-    // lifespan determines the stroke and fill alpha of the particle
+
+      // If particle hits side of the screen it bounces off but retains its velocity. 
+      if (this.position.x < 5){
+        this.velocity.mult(-1, 1);
+      }
+      if (this.position.x >= width){
+        this.velocity.mult(-1, 1);
+      }
     noStroke();
     colorMode(HSB);
-    fill(this.fill, 100, 100, this.lifespan);
+    fill(this.fill, 100, 100);
     rect(this.position.x, this.position.y, this.size, this.size);
   }
 
@@ -173,11 +173,6 @@ class Particle {
     f.div(this.mass);
     this.acceleration.add(f);
   }
-
-  // Is the particle alive or dead?
-  isDead() {
-    return (this.lifespan < 0.0);
-  }
 }
 
 class Emitter { //constructing an emitter class to clean up the draw loop and allow us to have multiple emitters
@@ -185,11 +180,10 @@ class Emitter { //constructing an emitter class to clean up the draw loop and al
     this.origin = createVector(x, y);
     this.particles = []; //this takes the place of declaring a global particle array
     this.index = 0;
-    this.repeller = new Repeller ();
   }
 
   addParticle(x, y){ 
-      this.particles.push(new Particle(x, y, pColor));
+      this.particles.push(new Particle(x, y, pColor, currentSize));
   }
 
   applyForce(force) {
@@ -211,71 +205,19 @@ class Emitter { //constructing an emitter class to clean up the draw loop and al
     for (let i = this.particles.length - 1; i >= 0; i--){
       this.particles[i].run();
       this.particles[i].look(this.particles);
-    }
-    if(repelling == true){
-      this.repeller.show();
-      for (let i = 0; i < this.particles.length; i++){
-        // introduce some code that says "if the repeller is a certain distance away apply force"
-        let distance = p5.Vector.dist(this.particles[i].position, this.repeller.position);
-        if(distance.x < 1000 || distance.y < 100){
-          let force =  this.repeller.repel(this.particles[i]);
-          this.particles[i].applyForce(force);
-        }
-        
-      }
-      // for (let particle of this.particles){
-      //   let force = this.repeller.repel(particle);
-      //   particle.applyForce(force);
-      // }
-
-    }
-  }
-
-  deleteColor(colorVal){
-    for(let i = this.particles.length - 1; i > 0; i--){
-      if(this.particles[i].fill == colorVal){
+      //If the particle is below the bounds of the canvas (e.g. if the user resizes the window) delete it
+      if (this.particles[i].position.y > height){
         this.particles.splice(i, 1);
       }
     }
   }
 }
 
-class Repeller {
 
-  constructor() {    
-    //Change here to adjust strength
-    this.power = 150;
-    this.position = createVector(mouseX, mouseY);
-  }
-
-  show() {
-    //this.position.x = mouseX;
-    //this.position.y = mouseY;
-    stroke(0);
-    fill(255);
-    ellipse(mouseX, mouseY, 50, 50);
-
-
-  }
-
-  repel(particle) {
-    let force = p5.Vector.sub(this.position, particle.position);
-    let distance = force.mag();
-
-    distance = constrain(distance, 5, 50);
-    let strength = -1 * this.power / (distance * distance);
-    force.setMag(strength);
-    return force;
-
-
-  }
-
-}
-
-function explosion(myEmitter){
-  for(let i = 0; i < myEmitter.particles.length; i++){
-    let force = createVector(random(-10, 10), random(-1, -10));
-    myEmitter.particles[i].applyForce(force);
+function explosion(){
+  for(let i = 0; i < emitter.particles.length; i++){
+    let force = createVector(random(-20, 20), random(-1, -20));
+    emitter.particles[i].applyForce(force);
   }
 }
 
@@ -295,15 +237,33 @@ function decrementColor(){
   }
 }
 
-//https://natureofcode.com/particles/
+function deleteColor(){
+  for(let i = emitter.particles.length - 1; i > 0; i--){
+    if(emitter.particles[i].fill == pColor){
+      emitter.particles.splice(i, 1);
+    }
+  }
+}
 
-// Some text at the bottom that says to press buttons to cycle through different sand colours
-// Then more mouse interactivity if there's time (turn mouse into a repeller and push the sand around maybe? Other particles like water or gas that behave differently?)
-// Or make it so you can press a key and all the particles of a certain colour dissapear, but then you'd want to check for whether or not they're stopped
+function increaseSize(){
+  if(currentSize < 30){
+    currentSize += 2;
+  }
+}
 
-// Add code that says: when a force other than gravity is applied, this.stopped = false
+function decreaseSize(){
+  if(currentSize >2){
+    currentSize -= 2;
+  }
+}
 
-// If I'm stuck on trying to make this work: try having "press space to make the particles blow up"
+function reset(){
+  for(let i = emitter.particles.length - 1; i > 0; i--){
+    emitter.particles.splice(i, 1);
+  }
+}
 
-// Create bounce physics on the side of the walls!
-// Make it so that if a particle leaves the X bounds of the canvas it gets deleted
+/* More mouse interactivity if there's time 
+Try to add bounce physics between the particles themselves (at least when they're not stopped, if you want)
+Otherwise that should probably be good
+*/
