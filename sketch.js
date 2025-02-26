@@ -121,7 +121,7 @@ class Particle {
   run() {
     // Adds acceleration to velocity, adding velocity to the location
     // Then acceleration gets set to 0 because the force is getting re-added to it every draw loop
-    let gravity = createVector(0, 0.05); // gravity needs to be declared as a variable to use the createVector function, since passing applyForce two numbers won't make it register a vector
+    let gravity = createVector(0, 0.07); // gravity needs to be declared as a variable to use the createVector function, since passing applyForce two numbers won't make it register a vector
 
       if (this.stopped == false){
         this.velocity.add(this.acceleration);
@@ -154,7 +154,11 @@ class Particle {
       let d = p5.Vector.dist(theseParticles[i].position, this.position);
       if ((this != theseParticles[i] && theseParticles[i].stopped == true && d < desiredSeparation) || this.position.y >= height - 10) {
         this.stopped = true;
-      } // I want to write "else this.stopped = false" but it breaks the code... why?
+      } 
+      // this is the line of code that makes the particles bounce off each other, but it's not super clear that this is happening... can't decide if I want to keep this
+      if(this != theseParticles[i] && d < desiredSeparation){
+        this.velocity.mult(-1, 1);
+      }
     }
   }
 
@@ -216,7 +220,7 @@ class Emitter { //constructing an emitter class to clean up the draw loop and al
 
 function explosion(){
   for(let i = 0; i < emitter.particles.length; i++){
-    let force = createVector(random(-20, 20), random(-1, -20));
+    let force = createVector(random(-20, 20), random(-5, -20));
     emitter.particles[i].applyForce(force);
   }
 }
@@ -264,6 +268,4 @@ function reset(){
 }
 
 /* More mouse interactivity if there's time 
-Try to add bounce physics between the particles themselves (at least when they're not stopped, if you want)
-Otherwise that should probably be good
 */
