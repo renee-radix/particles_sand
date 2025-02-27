@@ -1,44 +1,66 @@
-let emitters = [];
 let emitter;
 let pColor;
 let exploding = false;
+// size of emitted particles
 let currentSize = 4;
+let leftColorChangeButton;
+let rightColorChangeButton;
+let deleteButton;
+let explosionButton;
+let increaseSizeButton;
+let decreaseSizeButton;
+let resetButton;
+let drawing = true;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   emitter = new Emitter;
   pColor = random(360);
 
-  // Buttons need to be in setup loop otherwise they'll slow the sketch to a crawl, since they're html elements they can't have a background go over them.
-  // I could put them in the resizeWindow() function but that would lead to them being duplicated since I don't know how to delete buttons
+  // Buttons need to be in setup loop otherwise they'll slow the sketch to a crawl, since we'll just generate buttons over and over again.
+  // I could put them in the resizeWindow() function but that would lead to them being duplicated since I don't know how to delete buttons and the p5.js docs don't say how.
   // There is a way I can change the way the buttons look in CSS but I don't know if I want to dig into that right now. 
-  let leftColorChangeButton = createButton('Colour change to the left');
+  leftColorChangeButton = createButton('Colour change to the left');
   leftColorChangeButton.position(width/1.4, height/16);
   leftColorChangeButton.mousePressed(incrementColor);
+  leftColorChangeButton.mousePressed(noDraw);
+  leftColorChangeButton.mouseClicked(yesDraw);
 
-  let rightColorChangeButton = createButton('Color change to the right');
+  rightColorChangeButton = createButton('Color change to the right');
   rightColorChangeButton.position(width/1.4, (height/16) * 2);
   rightColorChangeButton.mousePressed(decrementColor);
+  rightColorChangeButton.mousePressed(noDraw);
+  rightColorChangeButton.mouseClicked(yesDraw);
 
-  let deleteButton = createButton('Delete particles');
+  deleteButton = createButton('Delete particles');
   deleteButton.position(width/1.4, (height/16) * 3);
   deleteButton.mousePressed(deleteColor);
+  deleteButton.mouseOver(noDraw);
+  deleteButton.mouseOut(yesDraw);
 
-  let explosionButton = createButton('Explode particles!');
+  explosionButton = createButton('Explode particles!');
   explosionButton.position(width/1.4, (height/16) * 4);
-  explosionButton.mousePressed(explosion);
+  explosionButton.mousePressed(explosion, noDraw);
+  explosionButton.mouseOver(noDraw);
+  explosionButton.mouseOut(yesDraw);
 
-  let increaseSizeButton = createButton('Increase particle size');
+  increaseSizeButton = createButton('Increase particle size');
   increaseSizeButton.position(width/1.4, (height/16)*5);
   increaseSizeButton.mousePressed(increaseSize);
+  increaseSizeButton.mouseOver(noDraw);
+  increaseSizeButton.mouseOut(yesDraw);
   
-  let decreaseSizeButton = createButton('Decrease particle size');
+  decreaseSizeButton = createButton('Decrease particle size');
   decreaseSizeButton.position(width/1.4, (height/16)*6);
   decreaseSizeButton.mousePressed(decreaseSize);
+  decreaseSizeButton.mouseOver(noDraw);
+  decreaseSizeButton.mouseOut(yesDraw);
 
-  let resetButton = createButton('Reset');
+  resetButton = createButton('Reset');
   resetButton.position(width/1.4, (height/16) * 7);
   resetButton.mousePressed(reset);
+  resetButton.mouseOver(noDraw);
+  resetButton.mouseOut(yesDraw);
   
 }
 
@@ -46,15 +68,17 @@ function setup() {
 function draw() {
   background(0);
 
-
+  // add gravity to all the generated particles
   let gravity = createVector(0, 0.1);
   emitter.applyGravity(gravity);
 
-  if(mouseIsPressed == true){
+  // when the mouse is pressed add particles at the rate of once per frame
+  if(mouseIsPressed == true && drawing == true){
     emitter.addParticle(mouseX, mouseY);
   }
   emitter.run();
 
+  // this is just for the display
   colorMode(HSB);
   fill(pColor, 100, 100, 50);
   rect(width/1.1, height/1.1, currentSize, currentSize)
@@ -63,6 +87,9 @@ function draw() {
     explosion(emitter);
   }
 
+  if(drawing == false){
+    drawing = true;
+  }
 
 }
 
@@ -83,7 +110,16 @@ function keyPressed(){
     decrementColor();
   }
 
-  // using escape key to delete all the particles
+  if (keyCode === UP_ARROW){
+    exploding = false;
+    increaseSize();
+  }
+
+  if (keyCode === DOWN_ARROW){
+    exploding = false;
+    decreaseSize();
+  }
+
   if (keyCode == 27){
     exploding = false;
     deleteColor();
@@ -99,13 +135,14 @@ function keyPressed(){
 }
     
 
+// allows the window to be resized mid sketch and still work, though the buttons stay in the same place
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
 
 
 
-
+// Particle class
 class Particle {
   constructor(x, y, fill, size) {
     this.size = size;
@@ -113,6 +150,7 @@ class Particle {
     this.velocity = createVector(random(-.5, .5), random(-.5, 0));
     this.acceleration = createVector(0, 0);
     this.fill = fill;
+    // Different mass depending on colour
     this.mass = map(fill, 0, 360, 1, 5);
     this.stopped = false;
   }
@@ -121,8 +159,6 @@ class Particle {
   run() {
     // Adds acceleration to velocity, adding velocity to the location
     // Then acceleration gets set to 0 because the force is getting re-added to it every draw loop
-    let gravity = createVector(0, 0.07); // gravity needs to be declared as a variable to use the createVector function, since passing applyForce two numbers won't make it register a vector
-
       if (this.stopped == false){
         this.velocity.add(this.acceleration);
         this.position.add(this.velocity);
@@ -148,14 +184,17 @@ class Particle {
     rect(this.position.x, this.position.y, this.size, this.size);
   }
 
+  // Code to introduce particle-on-particle physics
   look(theseParticles){
     let desiredSeparation = this.size;
     for(let i = 0; i < theseParticles.length; i++){
       let d = p5.Vector.dist(theseParticles[i].position, this.position);
+      // if the particle we're looking at is not the same as this particle and the particle we're looking at is stopped and the particle is close enough to our particle, or our particle is low enough on the screen
       if ((this != theseParticles[i] && theseParticles[i].stopped == true && d < desiredSeparation) || this.position.y >= height - 10) {
+        // stop it (simulating it hitting the ground)
         this.stopped = true;
       } 
-      // this is the line of code that makes the particles bounce off each other, but it's not super clear that this is happening... can't decide if I want to keep this
+      // this is the line of code that makes the particles bounce off each other
       if(this != theseParticles[i] && d < desiredSeparation){
         this.velocity.mult(-1, 1);
       }
@@ -170,8 +209,6 @@ class Particle {
     this.stopped = false;
   }
 
-  // Seperate applyGravity method because I want gravity to apply to the particles even when they're not moving
-
   applyGravity(force){
     let f = force.copy();
     f.div(this.mass);
@@ -179,7 +216,7 @@ class Particle {
   }
 }
 
-class Emitter { //constructing an emitter class to clean up the draw loop and allow us to have multiple emitters
+class Emitter { //constructing an emitter class to clean up the draw loop
   constructor(x, y){
     this.origin = createVector(x, y);
     this.particles = []; //this takes the place of declaring a global particle array
@@ -217,7 +254,7 @@ class Emitter { //constructing an emitter class to clean up the draw loop and al
   }
 }
 
-
+// function for explosion
 function explosion(){
   for(let i = 0; i < emitter.particles.length; i++){
     let force = createVector(random(-20, 20), random(-5, -20));
@@ -225,6 +262,7 @@ function explosion(){
   }
 }
 
+// functions for changing the colours and sizes
 function incrementColor(){
   if(pColor == 340){
     pColor = 20
@@ -261,11 +299,18 @@ function decreaseSize(){
   }
 }
 
+// function for deleting all the particles
 function reset(){
   for(let i = emitter.particles.length - 1; i > 0; i--){
     emitter.particles.splice(i, 1);
   }
 }
 
-/* More mouse interactivity if there's time 
-*/
+function noDraw(){
+  drawing = false;
+
+}
+
+function yesDraw(){
+  drawing = true;
+}
