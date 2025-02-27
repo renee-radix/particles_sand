@@ -186,7 +186,7 @@ class Particle {
         this.stopped = true;
       } 
       // this is the line of code that makes the particles bounce off each other
-      if(this != theseParticles[i] && d < desiredSeparation){
+      if(this != theseParticles[i] && d < desiredSeparation && theseParticles[i].fill == this.fill){
         this.velocity.mult(-1, 1);
       }
     }
