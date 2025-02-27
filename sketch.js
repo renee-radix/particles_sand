@@ -255,18 +255,22 @@ function explosion(){
 
 // functions for changing the colours and sizes
 function incrementColor(){
-  if(pColor == 340){
+  if(pColor > 340){
     pColor = 20
+    console.log(pColor);
   }else{
   pColor = pColor + 20
+  console.log(pColor);
   }
 }
 
 function decrementColor(){
-  if(pColor == 20){
+  if(pColor < 20){
     pColor = 360
+    console.log(pColor);
   }else{
   pColor = pColor - 20
+  console.log(pColor);
   }
 }
 
