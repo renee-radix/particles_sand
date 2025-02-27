@@ -23,45 +23,36 @@ function setup() {
   leftColorChangeButton = createButton('Colour change to the left');
   leftColorChangeButton.position(width/1.4, height/16);
   leftColorChangeButton.mousePressed(incrementColor);
-  leftColorChangeButton.mousePressed(noDraw);
-  leftColorChangeButton.mouseClicked(yesDraw);
 
   rightColorChangeButton = createButton('Color change to the right');
   rightColorChangeButton.position(width/1.4, (height/16) * 2);
   rightColorChangeButton.mousePressed(decrementColor);
-  rightColorChangeButton.mousePressed(noDraw);
-  rightColorChangeButton.mouseClicked(yesDraw);
+
 
   deleteButton = createButton('Delete particles');
   deleteButton.position(width/1.4, (height/16) * 3);
   deleteButton.mousePressed(deleteColor);
-  deleteButton.mouseOver(noDraw);
-  deleteButton.mouseOut(yesDraw);
+
 
   explosionButton = createButton('Explode particles!');
   explosionButton.position(width/1.4, (height/16) * 4);
   explosionButton.mousePressed(explosion, noDraw);
-  explosionButton.mouseOver(noDraw);
-  explosionButton.mouseOut(yesDraw);
+
 
   increaseSizeButton = createButton('Increase particle size');
   increaseSizeButton.position(width/1.4, (height/16)*5);
   increaseSizeButton.mousePressed(increaseSize);
-  increaseSizeButton.mouseOver(noDraw);
-  increaseSizeButton.mouseOut(yesDraw);
+
   
   decreaseSizeButton = createButton('Decrease particle size');
   decreaseSizeButton.position(width/1.4, (height/16)*6);
   decreaseSizeButton.mousePressed(decreaseSize);
-  decreaseSizeButton.mouseOver(noDraw);
-  decreaseSizeButton.mouseOut(yesDraw);
+
 
   resetButton = createButton('Reset');
   resetButton.position(width/1.4, (height/16) * 7);
   resetButton.mousePressed(reset);
-  resetButton.mouseOver(noDraw);
-  resetButton.mouseOut(yesDraw);
-  
+
 }
 
 
