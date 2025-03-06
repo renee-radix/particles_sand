@@ -129,6 +129,13 @@ function keyPressed(){
 // allows the window to be resized mid sketch and still work, though the buttons stay in the same place
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  leftColorChangeButton.position(width/1.4, height/16);
+  rightColorChangeButton.position(width/1.4, (height/16) * 2);
+  deleteButton.position(width/1.4, (height/16) * 3);
+  explosionButton.position(width/1.4, (height/16) * 4);
+  increaseSizeButton.position(width/1.4, (height/16)*5);
+  decreaseSizeButton.position(width/1.4, (height/16)*6);
+  resetButton.position(width/1.4, (height/16) * 7);
 }
 
 
@@ -309,3 +316,5 @@ function noDraw(){
 function yesDraw(){
   drawing = true;
 }
+
+// reactive css for moving buttons around
